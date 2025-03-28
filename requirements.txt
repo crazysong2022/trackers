@@ -1,0 +1,6 @@
+streamlit
+psycopg2
+python-dotenv
+bcrypt
+pandas
+matplotlib
