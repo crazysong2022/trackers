@@ -32,8 +32,41 @@ def admin_dashboard():
         sub_type = st.selectbox("博彩子类型", ["体育类", "Casino 类"])
         
         if sub_type == "体育类":
-            team_a = st.text_input("对阵双方 - A队")
-            team_b = st.text_input("对阵双方 - B队")
+            # 查询所有队伍信息
+            teams = fetch_all("SELECT id, english_name, chinese_name FROM teams")
+            
+            # 动态文本框：对阵双方 - A队
+            team_a_search = st.text_input("对阵双方 - A队（输入英文或中文名称）")
+            filtered_teams_a = [
+                team for team in teams
+                if team_a_search.lower() in team["english_name"].lower() or team_a_search.lower() in team["chinese_name"].lower()
+            ]
+            team_a_options = {f"{team['english_name']} ({team['chinese_name']})": team for team in filtered_teams_a}
+            
+            if team_a_options:
+                selected_team_a = st.selectbox("选择 A队", list(team_a_options.keys()), key="team_a_select")
+                team_a = team_a_options[selected_team_a]
+            else:
+                st.warning("未找到匹配的 A队，请检查输入或添加新队伍。")
+                return
+            
+            # 动态文本框：对阵双方 - B队
+            team_b_search = st.text_input("对阵双方 - B队（输入英文或中文名称）")
+            filtered_teams_b = [
+                team for team in teams
+                if team_b_search.lower() in team["english_name"].lower() or team_b_search.lower() in team["chinese_name"].lower()
+            ]
+            team_b_options = {f"{team['english_name']} ({team['chinese_name']})": team for team in filtered_teams_b}
+            
+            if team_b_options:
+                selected_team_b = st.selectbox("选择 B队", list(team_b_options.keys()), key="team_b_select")
+                team_b = team_b_options[selected_team_b]
+            else:
+                st.warning("未找到匹配的 B队，请检查输入或添加新队伍。")
+                return
+            
+            # 输入赛制
+            game = st.text_input("赛制（例如 NHL、NBA）")
             
             bet_options = []
             num_bets = st.number_input("赔率选项数量", min_value=1, step=1)
@@ -57,8 +90,15 @@ def admin_dashboard():
             new_balance = current_balance - amount + return_amount
             
             details = {
-                "team_a": team_a,
-                "team_b": team_b,
+                "team_a": {
+                    "english_name": team_a["english_name"],
+                    "chinese_name": team_a["chinese_name"]
+                },
+                "team_b": {
+                    "english_name": team_b["english_name"],
+                    "chinese_name": team_b["chinese_name"]
+                },
+                "game": game,  # 新增赛制字段
                 "bet_options": bet_options,
                 "selected_bet": selected_bet,
                 "amount": float(amount),

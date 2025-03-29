@@ -26,6 +26,8 @@ def format_details(details):
         readable_text = []
         if "team_a" in details and "team_b" in details:
             readable_text.append(f"{details['team_a']} vs {details['team_b']}")
+        if "game" in details and details["game"]:
+            readable_text.append(f"赛制: {details['game']}")
         if "amount" in details:
             readable_text.append(f"押注金额: ${details['amount']:.2f}")
         if "return_amount" in details:
@@ -42,7 +44,7 @@ def format_details(details):
         return "无法解析详情字段"
 
 def main():
-    st.title("投资追踪系统")
+    st.title("Habitats Investment Tracking")
 
     # 显示登出按钮（仅当用户已登录时）
     if st.session_state["logged_in"]:
