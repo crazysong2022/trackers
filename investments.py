@@ -50,4 +50,20 @@ def filter_investments(user_id, investment_type=None, start_date=None, end_date=
     if conditions:
         query += " AND " + " AND ".join(conditions)
 
-    return fetch_all(query, tuple(params))
+    # 执行查询
+    results = fetch_all(query, tuple(params))
+    
+    # 确保返回的数据包含所有需要的字段
+    filtered_investments = []
+    for row in results:
+        filtered_investments.append({
+            "id": row["id"],
+            "investment_type": row["investment_type"],
+            "sub_type": row["sub_type"],
+            "amount": float(row["amount"]),  # 确保金额是浮点数
+            "return_amount": float(row["return_amount"]),  # 确保回报金额是浮点数
+            "investment_date": row["investment_date"].strftime("%Y-%m-%d"),  # 格式化日期
+            "details": row["details"]  # 保留原始 JSON 数据
+        })
+    
+    return filtered_investments
