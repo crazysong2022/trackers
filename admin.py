@@ -75,7 +75,11 @@ def admin_dashboard():
                 bet_type = st.text_input(f"选项 {i+1} - 赔率类型", key=f"bet_type_{i}")
                 odds = st.number_input(f"选项 {i+1} - 赔率", min_value=0.0, step=0.01, key=f"odds_{i}")
                 selected = st.checkbox(f"选项 {i+1} - 是否选择", key=f"selected_{i}")
-                bet_options.append({"type": bet_type, "odds": Decimal(str(odds)), "selected": selected})
+                bet_options.append({
+                    "type": bet_type,
+                    "odds": Decimal(str(odds)),
+                    "selected": selected
+                })
             
             selected_bet = [bet["type"] for bet in bet_options if bet["selected"]]
             selected_bet = selected_bet[0] if selected_bet else None
@@ -89,7 +93,10 @@ def admin_dashboard():
             # 计算新的余额
             new_balance = current_balance - amount + return_amount
             
+            # 构造 details 字段
             details = {
+                "game": game,  # 赛制字段
+                "amount": float(amount),
                 "team_a": {
                     "english_name": team_a["english_name"],
                     "chinese_name": team_a["chinese_name"]
@@ -98,10 +105,15 @@ def admin_dashboard():
                     "english_name": team_b["english_name"],
                     "chinese_name": team_b["chinese_name"]
                 },
-                "game": game,  # 新增赛制字段
-                "bet_options": bet_options,
+                "bet_options": [
+                    {
+                        "type": bet["type"],
+                        "odds": float(bet["odds"]),
+                        "selected": bet["selected"]
+                    }
+                    for bet in bet_options
+                ],
                 "selected_bet": selected_bet,
-                "amount": float(amount),
                 "return_amount": float(return_amount)
             }
         elif sub_type == "Casino 类":
@@ -141,6 +153,6 @@ def admin_dashboard():
         """
         execute_query(update_balance_query, (str(new_balance), user_id))
         
-        st.success("投资记录已成功添加！")
+        st.success("投资记录已成功添加到本地和云端数据库！")
         st.success(f"用户余额已更新为: ${new_balance:.2f}")
         st.rerun()

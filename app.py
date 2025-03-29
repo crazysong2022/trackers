@@ -19,19 +19,45 @@ if "selected_investment_type" not in st.session_state:
 def format_details(details):
     """将 details 字段转换为更易读的文本格式"""
     try:
+        # 如果 details 是字符串，尝试解析为字典
         if isinstance(details, str):
-            details = json.loads(details)  # 如果是字符串，解析为字典
+            try:
+                details = json.loads(details)  # 尝试解析为 JSON 字典
+            except json.JSONDecodeError:
+                # 如果解析失败，说明 details 已经是易读的字符串
+                return details
         
         # 构造易读的文本
         readable_text = []
+        
+        # 兼容旧记录（字符串形式）和新记录（嵌套对象形式）
         if "team_a" in details and "team_b" in details:
-            readable_text.append(f"{details['team_a']} vs {details['team_b']}")
+            team_a = details["team_a"]
+            team_b = details["team_b"]
+            
+            # 处理 team_a 和 team_b 的不同格式
+            team_a_str = (
+                f"{team_a['english_name']} ({team_a['chinese_name']})"
+                if isinstance(team_a, dict)
+                else team_a
+            )
+            team_b_str = (
+                f"{team_b['english_name']} ({team_b['chinese_name']})"
+                if isinstance(team_b, dict)
+                else team_b
+            )
+            
+            readable_text.append(f"{team_a_str} vs {team_b_str}")
+        
         if "game" in details and details["game"]:
             readable_text.append(f"赛制: {details['game']}")
+        
         if "amount" in details:
             readable_text.append(f"押注金额: ${details['amount']:.2f}")
+        
         if "return_amount" in details:
             readable_text.append(f"回报金额: ${details['return_amount']:.2f}")
+        
         if "bet_options" in details:
             bet_options = ", ".join(
                 f"{opt['type']} (赔率: {opt['odds']}, {'已选' if opt['selected'] else '未选'})"
@@ -39,8 +65,10 @@ def format_details(details):
             )
             readable_text.append(f"赔率选项: {bet_options}")
         
-        return " | ".join(readable_text)
+        return " | ".join(readable_text) if readable_text else "无详情信息"
+    
     except Exception as e:
+        print(f"解析 details 字段失败: {e}")
         return "无法解析详情字段"
 
 def main():
