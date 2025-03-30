@@ -1,5 +1,6 @@
 # 忽略环境变量文件
 .env
+.csv
 
 # 忽略 Python 缓存文件
 __pycache__/
@@ -8,3 +9,4 @@ __pycache__/
 # 忽略虚拟环境
 venv/
 myenv/
+database_backup.py

@@ -20,16 +20,16 @@ def verify_password(stored_password, provided_password):
 def login(username, password):
     """用户登录验证"""
     query = """
-        SELECT id, username, password, role, balance
+        SELECT id, username, password_hash, role, balance
         FROM users
         WHERE username = %s
     """
     user = fetch_one(query, (username,))
-    if user and verify_password(user["password"], password):
+    if user and verify_password(user["password_hash"], password):
         return {
             "id": user["id"],
             "username": user["username"],
-            "password": user["password"],
+            "password_hash": user["password_hash"],  # 字段名已更新为 password_hash
             "role": user["role"],
             "balance": user["balance"]
         }
@@ -38,7 +38,7 @@ def login(username, password):
 def get_user_by_username(username):
     """根据用户名获取用户信息"""
     query = """
-        SELECT id, username, password, role, balance
+        SELECT id, username, password_hash, role, balance
         FROM users
         WHERE username = %s
     """
@@ -47,7 +47,7 @@ def get_user_by_username(username):
         return {
             "id": user["id"],
             "username": user["username"],
-            "password": user["password"],
+            "password_hash": user["password_hash"],  # 字段名已更新为 password_hash
             "role": user["role"],
             "balance": user["balance"]
         }

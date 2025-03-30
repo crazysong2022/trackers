@@ -1,0 +1,4 @@
+id,username,password_hash,balance,role
+1,admin,$2b$12$BdBiITgW5F/VDVnHV94nh.FTgB554OXm2R4JOFQzNaykbmd2zdNBm,0.00,admin
+3,VIP888888,$2b$12$ePcE/0a1nyL4JGSjTs4shOg7.TdZzlnhBO01JJlkIHRR6guiFokM6,487.00,user
+4,VIP666666,$2b$12$jaH6Z4jkj4jbAVuzfy.PbOqdGdABMPEnZfw8bIYLnZhnYIYe//S3O,33.40,user

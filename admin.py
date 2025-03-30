@@ -153,6 +153,6 @@ def admin_dashboard():
         """
         execute_query(update_balance_query, (str(new_balance), user_id))
         
-        st.success("投资记录已成功添加到本地和云端数据库！")
+        st.success("投资记录已成功添加到数据库！")
         st.success(f"用户余额已更新为: ${new_balance:.2f}")
         st.rerun()
