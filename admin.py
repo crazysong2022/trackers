@@ -16,17 +16,13 @@ def admin_dashboard():
     
     # 录入新投资记录
     st.subheader("录入新投资记录")
-    users = fetch_all("SELECT id, username, balance FROM users WHERE role != 'admin'")
-    user_options = {user["username"]: {"id": user["id"], "balance": Decimal(str(user["balance"]))} for user in users}
+    users = fetch_all("SELECT id, username FROM users WHERE role != 'admin'")
+    user_options = {user["username"]: user["id"] for user in users}
     
     selected_user = st.selectbox("选择用户", list(user_options.keys()))
-    user_info = user_options[selected_user]
-    user_id = user_info["id"]
-    current_balance = user_info["balance"]
+    user_id = user_options[selected_user]
     
-    st.write(f"当前余额: ${current_balance:.2f}")
-    
-    investment_type = st.selectbox("投资类型", ["股票", "黄金", "期货", "博彩"])
+    investment_type = st.selectbox("投资类型", ["股票", "黄金", "期货", "博彩", "虚拟币"])  # 新增 "虚拟币"
     
     if investment_type == "博彩":
         sub_type = st.selectbox("博彩子类型", ["体育类", "Casino 类"])
@@ -90,8 +86,11 @@ def admin_dashboard():
             return_amount = st.number_input("回报金额", min_value=0.0, step=0.01)
             return_amount = Decimal(str(return_amount))
             
-            # 计算新的余额
-            new_balance = current_balance - amount + return_amount
+            # 投资日期选择
+            investment_date = st.date_input("投资日期", value=None, key="investment_date")
+            if not investment_date:
+                st.warning("请选择投资日期！")
+                return
             
             # 构造 details 字段
             details = {
@@ -116,43 +115,84 @@ def admin_dashboard():
                 "selected_bet": selected_bet,
                 "return_amount": float(return_amount)
             }
+            
+            # 插入博彩记录
+            if st.button("提交"):
+                query = """
+                    INSERT INTO investments (user_id, investment_type, sub_type, amount, return_amount, investment_date, details)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                """
+                execute_query(query, (
+                    user_id, "博彩", sub_type, str(amount), str(return_amount), 
+                    investment_date, json.dumps(details, default=custom_serializer)
+                ))
+                
+                st.success("博彩投资记录已成功添加到数据库！")
+                st.rerun()
+        
         elif sub_type == "Casino 类":
-            details = {}
-            amount = Decimal("0.0")
-            return_amount = Decimal("0.0")
-            new_balance = current_balance
+            st.warning("Casino 类投资暂不支持，请稍后再试！")
+    
+    elif investment_type == "虚拟币":
+        sub_type = st.selectbox("选择虚拟币类型", ["BTC", "ETH", "SOL", "ADA", "BTT"])  # 支持多种虚拟币
+        
+        # 手动输入买入价格和购买数量
+        buy_price = st.number_input("买入价格 (USDT)", min_value=0.0, step=0.01)
+        quantity = st.number_input("购买数量", min_value=0.0, step=0.0001)
+        
+        # 计算总购买金额
+        total_amount = Decimal(str(buy_price * quantity))
+        st.write(f"总购买金额: ${total_amount:.2f}")
+        
+        # 投资日期选择
+        investment_date = st.date_input("投资日期", value=None, key="crypto_investment_date")
+        if not investment_date:
+            st.warning("请选择投资日期！")
+            return
+        
+        # 插入虚拟币投资记录
+        if st.button("提交"):
+            query = """
+                INSERT INTO crypto_investments (user_id, sub_type, buy_price, quantity, investment_date)
+                VALUES (%s, %s, %s, %s, %s)
+            """
+            execute_query(query, (
+                user_id, sub_type, str(buy_price), str(quantity), investment_date
+            ))
+            
+            st.success("虚拟币投资记录已成功添加到数据库！")
+            st.rerun()
+
+    elif investment_type == "股票":
+        sub_type = st.text_input("输入股票代码（如 AAPL、TSLA）")  # 手动输入股票代码
+        
+        # 手动输入买入价格和购买数量
+        buy_price = st.number_input("买入价格 (美元)", min_value=0.0, step=0.01)
+        quantity = st.number_input("购买数量", min_value=0.0, step=0.0001)
+        
+        # 计算总购买金额
+        total_amount = Decimal(str(buy_price * quantity))
+        st.write(f"总购买金额: ${total_amount:.2f}")
+        
+        # 投资日期选择
+        investment_date = st.date_input("投资日期", value=None, key="stock_investment_date")
+        if not investment_date:
+            st.warning("请选择投资日期！")
+            return
+        
+        # 插入股票投资记录
+        if st.button("提交"):
+            query = """
+                INSERT INTO stock_investments (user_id, sub_type, buy_price, quantity, investment_date)
+                VALUES (%s, %s, %s, %s, %s)
+            """
+            execute_query(query, (
+                user_id, sub_type, str(buy_price), str(quantity), investment_date
+            ))
+            
+            st.success("股票投资记录已成功添加到数据库！")
+            st.rerun()
+    
     else:
-        sub_type = None
-        details = {}
-        amount = st.number_input("投资金额", min_value=0.0, step=0.01)
-        return_amount = st.number_input("回报金额", min_value=0.0, step=0.01)
-        amount = Decimal(str(amount))
-        return_amount = Decimal(str(return_amount))
-        
-        # 计算新的余额
-        new_balance = current_balance - amount + return_amount
+        st.warning("暂不支持其他投资类型的录入，请稍后再试！")
     
-    investment_date = st.date_input("投资日期")
-    
-    if st.button("提交"):
-        # 确保 details 是有效的 JSON 字符串
-        details_json = json.dumps(details, default=custom_serializer)
-        
-        # 插入投资记录
-        query = """
-            INSERT INTO investments (user_id, investment_type, sub_type, amount, return_amount, investment_date, details)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
-        """
-        execute_query(query, (
-            user_id, investment_type, sub_type, str(amount), str(return_amount), investment_date, details_json
-        ))
-        
-        # 更新用户余额
-        update_balance_query = """
-            UPDATE users SET balance = %s WHERE id = %s
-        """
-        execute_query(update_balance_query, (str(new_balance), user_id))
-        
-        st.success("投资记录已成功添加到数据库！")
-        st.success(f"用户余额已更新为: ${new_balance:.2f}")
-        st.rerun()
